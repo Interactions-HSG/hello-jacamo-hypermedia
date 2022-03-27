@@ -1,0 +1,94 @@
+/*
+   Project hello_jacamo_hypermedia
+
+   Gradle build file for JaCaMo Applications
+   March 21, 2022 - 01:55:29
+*/
+
+defaultTasks 'run'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+version '1.0'
+group   'org.jacamo'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    maven { url "https://raw.github.com/jacamo-lang/mvn-repo/master" }
+    maven { url 'https://jitpack.io' }
+
+    flatDir {
+       dirs 'lib'
+    }
+
+    mavenCentral()    
+}
+
+dependencies {
+    compile group: 'org.jacamo', name: 'jacamo', version: '0.9-SNAPSHOT'
+    compile group: 'com.github.Interactions-HSG', name: 'jacamo-hypermedia', version: 'befc6bd'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/env'
+            srcDir 'src/agt'
+            srcDir 'src/org'
+            srcDir 'src/java'
+        }
+        resources {
+            srcDir 'src/resources'
+        }
+    }
+}
+
+task run (type: JavaExec, dependsOn: 'classes') {
+    group       ' JaCaMo'
+    description 'runs the JaCaMo application'
+    doFirst {
+        mkdir 'log'
+    }
+    main 'jacamo.infra.JaCaMoLauncher'
+    args 'hello_jacamo_hypermedia.jcm'
+    classpath sourceSets.main.runtimeClasspath
+}
+
+
+task uberJar(type: Jar, dependsOn: 'classes') {
+    group      ' JaCaMo'
+    description 'creates a single runnable jar file with all dependencies'
+
+    manifest {
+        attributes 'Main-Class': 'jacamo.infra.JaCaMoLauncher'
+    }
+    baseName = 'jacamo-hello_jacamo_hypermedia' // the name must start with jacamo so that jacamo...jar is found in the classpath
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from (project.projectDir.absolutePath) {
+        include '**/*.asl'
+        include '**/*.xml'
+        include '**/*.jcm'
+        include '*.properties'
+    }
+    from (project.buildDir.absolutePath + '/jcm') {
+        include '**/*'
+    }
+    with jar
+
+    doFirst {
+        copy {
+            from 'hello_jacamo_hypermedia.jcm'
+            rename 'hello_jacamo_hypermedia.jcm','default.jcm'
+            into project.buildDir.absolutePath + '/jcm'
+        }
+    }
+}
+
+clean {
+    delete 'bin'
+    delete 'build'
+    delete 'log'
+}
