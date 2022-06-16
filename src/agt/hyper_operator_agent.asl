@@ -1,8 +1,10 @@
 /* Initial beliefs and rules */
 
-//Please register here for using the Phantom X Robot: https://interactions.ics.unisg.ch/leubot
+// Please register here for using the Phantom X Robot: https://interactions.ics.unisg.ch/leubot
+// Then add you API key below. *Note:* To use the robot, make sure that the dry run flag for ThingArtifacts
+// is set to false. ThingArtifacts are instantiated on line 27 of inc/hypermedia.asl
 api_key("API-KEY").
-td_url("http://yggdrasil.interactions.ics.unisg.ch/environments/61/workspaces/102/artifacts/leubot1").
+env_url("https://yggdrasil.interactions.ics.unisg.ch/environments/61").
 
 //Check the default, lower and upper limits of the PhantomX joint parameters: https://github.com/Interactions-HSG/leubot
 sourceAngle(512). // ~180 degrees angle
@@ -14,10 +16,15 @@ targetAngle(256). // ~90 degrees angle
 
 /* Plans */
 
-+!start : td_url(Url) <-
++!start : env_url(Url) <-
   .print("hello world.");
-  makeArtifact("leubot1", "ch.unisg.ics.interactions.jacamo.artifacts.wot.ThingArtifact", [Url, true], ArtId);
-  .print("Robot arm artifact created!");
+  makeArtifact("notification-server", "ch.unisg.ics.interactions.jacamo.artifacts.yggdrasil.NotificationServerArtifact", ["localhost", 8081], _);
+  start;
+  !load_environment("building-61", Url);
+  .wait(2000);
+  !moveBlock.
+
++!moveBlock : true <-
   .print("Set API token");
   !setAuthentication;
   !deliver.
@@ -59,9 +66,11 @@ targetAngle(256). // ~90 degrees angle
   invokeAction("https://ci.mines-stetienne.fr/kg/ontology#Reset", [])[artifact_name("leubot1")];
 
   readProperty("https://ci.mines-stetienne.fr/kg/ontology#Posture", Types , Values)[artifact_name("leubot1")];
+  .print(Types);
   .print(Values).
 
 +!interval : true <- .wait(3000).
 
+{ include("inc/hypermedia.asl") }
 { include("$jacamoJar/templates/common-cartago.asl") }
 { include("$jacamoJar/templates/common-moise.asl") }

@@ -13,5 +13,5 @@
 */
 
 mas hello_jacamo_hypermedia {
-  agent operator_agent
+  agent hyper_operator_agent
 }
